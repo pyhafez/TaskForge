@@ -1,0 +1,27 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaskForge · Work, in motion</title>
+  <link rel="stylesheet" href="{% static 'taskforge/dashboard.css' %}">
+  <script src="{% static 'taskforge/dashboard.js' %}" defer></script>
+</head>
+<body>
+  <aside><a class="brand" href="/">▧ <span>TaskForge</span></a><div class="workspace-label">WORKSPACE</div><nav><a href="#overview" class="active">◈ Overview</a><a href="#projects">▤ Projects</a><a href="#runs">↗ Executions</a></nav><div class="aside-bottom"><span class="indicator"></span> <span id="health">Connecting</span><p>Built for work that matters.</p></div></aside>
+  <main>
+    <header><span>Workspace <span class="muted">/</span> Overview</span><div><span id="identity" class="muted">Your task control room</span><button id="logout" class="quiet" hidden>Sign out</button></div></header>
+    <section id="auth" class="auth-panel"><div><div class="eyebrow">WELCOME TO TASKFORGE</div><h1>Work, in motion.</h1><p class="muted">A clear view of your jobs, from the first request to the final result.</p></div><form id="login-form"><h2>Enter your workspace</h2><label>Email<input name="email" type="email" autocomplete="username" required></label><label>Password<input name="password" type="password" minlength="10" autocomplete="current-password" required></label><div class="form-actions"><button type="submit">Sign in →</button><button type="button" id="register" class="quiet">Create account</button></div></form></section>
+    <div id="dashboard" hidden>
+      <section class="intro" id="overview"><div><div class="eyebrow">YOUR OPERATIONS, AT A GLANCE</div><h1>Keep things moving.</h1><p class="muted">Create a job. Put it to work. Follow every step.</p></div><button id="refresh" class="quiet">↻ Refresh</button></section>
+      <section class="metrics"><article><span>Projects</span><strong id="project-count">—</strong><small>Organized workspaces</small></article><article><span>Jobs</span><strong id="job-count">—</strong><small>Ready to execute</small></article><article><span>Active runs</span><strong id="active-count">—</strong><small>Queued, running, or retrying</small></article><article><span>Completed</span><strong id="success-count">—</strong><small>Successful executions</small></article></section>
+      <section class="panel" id="projects"><div class="section-title"><div><h2>Your projects</h2><p class="muted">A home for every workflow.</p></div></div><form id="project-form" class="inline-form"><label class="sr-only" for="project-name">New project name</label><input id="project-name" name="name" placeholder="New project name" maxlength="120" required><button>Create project +</button></form><div id="project-list" class="project-grid"></div></section>
+      <section class="panel"><div class="section-title"><div><h2>Job library</h2><p class="muted">Reusable definitions. Reliable execution.</p></div></div><form id="job-form" class="job-form"><label>Project<select id="project-select" name="project" required></select></label><label>Job name<input name="name" placeholder="e.g. Daily sync" maxlength="120" required></label><label>Task type<select name="task_type"><option value="python_demo">Python demo</option><option value="sleep">Sleep</option><option value="http_call">HTTP call</option></select></label><label>Payload JSON<input name="payload" value='{"value":"Hello, TaskForge"}' required></label><button>Create job +</button></form><div class="table-wrap"><table><thead><tr><th>Job</th><th>Type</th><th>Timeout</th><th>Action</th></tr></thead><tbody id="job-list"></tbody></table></div></section>
+      <section class="panel" id="runs"><div class="section-title"><div><h2>Recent executions</h2><p class="muted">Every attempt has a story.</p></div><label class="filter">Show<select id="run-filter"><option value="">All states</option><option>QUEUED</option><option>RUNNING</option><option>SUCCEEDED</option><option>RETRYING</option><option>DEAD</option></select></label></div><div class="table-wrap"><table><thead><tr><th>Run / job</th><th>Status</th><th>Attempts</th><th>Submitted</th><th>Details</th></tr></thead><tbody id="run-list"></tbody></table></div><div class="pagination"><button id="previous" class="quiet">← Previous</button><span id="page-label">Page 1</span><button id="next" class="quiet">Next →</button></div></section>
+      <section id="log-panel" class="panel" hidden><div class="section-title"><div><h2>Execution output</h2><p id="log-run" class="muted"></p></div><button id="close-logs" class="quiet">Close ×</button></div><pre id="log-output" aria-live="polite"></pre></section>
+    </div>
+    <div id="notice" role="status" aria-live="polite" hidden></div>
+    <footer>TaskForge <span>Make every execution count.</span></footer>
+  </main>
+</body>
+</html>

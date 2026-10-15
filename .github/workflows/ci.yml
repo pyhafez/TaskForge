@@ -1,0 +1,33 @@
+name: Test TaskForge
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - run: pip install -c requirements.lock -e '.[dev,observability]'
+      - run: ruff check . && ruff format --check .
+      - run: python manage.py check && python manage.py makemigrations --check --dry-run
+      - run: python manage.py collectstatic --noinput
+      - run: pytest tests/unit --cov=taskforge --cov-report=term-missing
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - run: pip install -c requirements.lock -e '.[dev,observability]'
+      - run: python scripts/integration.py
+      - run: docker compose config --quiet

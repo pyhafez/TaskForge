@@ -1,0 +1,79 @@
+name: taskforge
+
+x-app: &app
+  build: .
+  environment: &environment
+    DEBUG: "false"
+    SECRET_KEY: ${SECRET_KEY:-compose-development-secret-change-before-production-123456}
+    DATABASE_URL: postgresql://taskforge:taskforge@postgres:5432/taskforge
+    REDIS_URL: redis://redis:6379/0
+    ALLOWED_HOSTS: localhost,127.0.0.1,app
+    REGISTRATION_OPEN: "true"
+    HTTP_ALLOWED_HOSTS: ${HTTP_ALLOWED_HOSTS:-httpbin.org}
+    OTEL_ENABLED: "true"
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: taskforge
+      POSTGRES_USER: taskforge
+      POSTGRES_PASSWORD: taskforge
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskforge -d taskforge"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  redis:
+    image: redis:7.4-alpine
+    command: redis-server --appendonly yes
+    ports: ["127.0.0.1:6379:6379"]
+    volumes: ["redis-data:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  jaeger:
+    image: jaegertracing/all-in-one:1.65.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports: ["127.0.0.1:16686:16686", "127.0.0.1:4318:4318"]
+    restart: unless-stopped
+  migrate:
+    <<: *app
+    command: python manage.py migrate --noinput
+    restart: "no"
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+  app:
+    <<: *app
+    ports: ["127.0.0.1:8000:8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  worker:
+    <<: *app
+    command: celery -A taskforge.celery:app worker --pool=threads --concurrency=4 --loglevel=INFO
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  dispatcher:
+    <<: *app
+    command: python manage.py dispatch
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+
+volumes:
+  postgres-data:
+  redis-data:
